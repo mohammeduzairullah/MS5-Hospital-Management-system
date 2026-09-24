@@ -85,4 +85,5 @@ Appointment transitions: Scheduled → Checked in → Completed; Scheduled or Ch
 
 ## Scope
 
-This is a local college/portfolio demo, not a clinical deployment. Use fictional information only. Before real hospital use, it needs audit logs, account recovery/password management, clinical review, backup/restore procedures, deployment security, and privacy/compliance assessment. The API binds to localhost. Hosted HTTPS deployments need a configured origin allowlist and production cookie settings.
+This is a local college/portfolio demo, not a clinical deployment. Use fictional information only. Before real hospital use, it needs audit logs, account recovery/password management, clinical review, backup/restore procedures, deployment security, and privacy/compliance assessment. Local development binds to localhost. Production uses the hosted origin allowlist, HTTPS cookies and Atlas. See DEPLOYMENT.md for Render setup and data migration.
+

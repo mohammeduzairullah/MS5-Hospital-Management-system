@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { checkProductionAccounts } from "./production.js";
 import { registerPasswordRoute } from "./password.js";
 import { management, publicUser } from "./management.js";
 import express from "express";
@@ -179,6 +180,7 @@ if (!production && !(await Patient.exists({}))) {
     })),
   );
 }
+if (production) await checkProductionAccounts(User);
 const app = express();
 if (process.env.RENDER) app.set("trust proxy", 1);
 const allowedOrigins = production

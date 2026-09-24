@@ -1,0 +1,38 @@
+{
+  "name": "careflow-hospital",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "server": "node --watch server/index.js",
+    "client": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "start": "node server/index.js",
+    "test": "node --test server/*.test.js",
+    "test:smoke": "node scripts/smoke.js",
+    "test:management": "node scripts/management-smoke.js",
+    "format": "prettier --write src server scripts package.json vite.config.js index.html"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.468.0",
+    "mongodb-memory-server": "^10.3.0",
+    "mongoose": "^8.19.0",
+    "pdfkit": "^0.20.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.4",
+    "prettier": "^3.9.9",
+    "vite": "^7.1.12"
+  }
+}

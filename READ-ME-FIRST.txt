@@ -1,0 +1,13 @@
+MS5 - Hospital Management system
+
+PRESENTATION CHECKLIST
+1. Copy this whole folder to a writable folder on the presentation laptop. Different drives, folder names, and spaces are supported.
+2. Keep .local/data and .local/session-secret to retain existing records/accounts. A GitHub download has no private database and creates sample accounts instead.
+3. Double-click Start-Careflow.cmd. Keep the window open. Open http://127.0.0.1:5173 after BOTH servers start.
+4. Run setup with internet BEFORE presenting. Missing Node.js, packages and MongoDB require downloads. Keep installed files for later offline use. Moving compatible installed files does not force reinstallation.
+5. Stop with Ctrl+C and wait for shutdown BEFORE copying or ejecting the USB.
+
+Requires compatible 64-bit Windows 10/11 and writable storage. Managed computers may block scripts/downloads. Ports 4000 and 5173 must be free.
+Fresh GitHub copy login: admin@careflow.demo / Careflow@2026
+Copied database: use your existing account and password.
+Do NOT run Delete-Careflow.cmd during presentation: it permanently deletes data and may uninstall shared runtimes.

@@ -1446,7 +1446,7 @@ function Login({ onLogin }) {
                 type="email"
                 autoComplete="username"
                 required
-                defaultValue={import.meta.env.DEV ? "admin@careflow.demo" : ""}
+                defaultValue="admin@careflow.demo"
               />
             </label>
             <label>
@@ -1456,7 +1456,7 @@ function Login({ onLogin }) {
                 type="password"
                 autoComplete="current-password"
                 required
-                defaultValue={import.meta.env.DEV ? "Careflow@2026" : ""}
+                defaultValue="Careflow@2026"
               />
             </label>
             <button className="primary" disabled={busy}>
@@ -1467,10 +1467,8 @@ function Login({ onLogin }) {
           <div className="login-demo">
             <b>Take a look around</b>
             <p>
-              {import.meta.env.DEV
-                ? "Demo credentials are filled in for you. "
-                : "Sign in with your administrator or doctor account. "}
-              All patient data is fictional.
+              Demo credentials are filled in for you. All patient data is
+              fictional.
             </p>
           </div>
           <small className="muted">

@@ -1,5 +1,6 @@
 import PDFDocument from "pdfkit";
 import { existsSync } from "node:fs";
+import path from "node:path";
 export function prescriptionPDF(record) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
@@ -14,8 +15,12 @@ export function prescriptionPDF(record) {
     doc.on("data", (c) => chunks.push(c));
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
-    if (existsSync("C:/Windows/Fonts/arial.ttf"))
-      doc.font("C:/Windows/Fonts/arial.ttf");
+    const arialFont = path.join(
+      process.env.WINDIR || "C:/Windows",
+      "Fonts",
+      "arial.ttf",
+    );
+    if (existsSync(arialFont)) doc.font(arialFont);
     doc.fillColor("#147767").fontSize(23).text("careflow.");
     doc
       .fontSize(10)
@@ -36,20 +41,18 @@ export function prescriptionPDF(record) {
     doc.fontSize(10).fillColor("#147767").text("DIAGNOSIS");
     doc.fillColor("#223e3a").fontSize(12).text(record.diagnosis);
     doc.moveDown();
-    doc
-      .fontSize(10)
-      .table({
-        columnStyles: [170, 100, 115, "*"],
-        data: [
-          ["Medicine", "Dosage", "Frequency", "Duration"],
-          ...record.medications.map((m) => [
-            m.name,
-            m.dosage,
-            m.frequency,
-            m.duration,
-          ]),
-        ],
-      });
+    doc.fontSize(10).table({
+      columnStyles: [170, 100, 115, "*"],
+      data: [
+        ["Medicine", "Dosage", "Frequency", "Duration"],
+        ...record.medications.map((m) => [
+          m.name,
+          m.dosage,
+          m.frequency,
+          m.duration,
+        ]),
+      ],
+    });
     doc.moveDown(1.5);
     doc.fillColor("#147767").fontSize(10).text("INSTRUCTIONS / FOLLOW-UP");
     doc

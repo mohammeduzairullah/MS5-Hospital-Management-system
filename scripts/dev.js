@@ -1,4 +1,6 @@
 import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
+process.chdir(fileURLToPath(new URL("../", import.meta.url)));
 const children = [
   spawn(process.execPath, ["--watch", "server/index.js"], { stdio: "inherit" }),
   spawn(

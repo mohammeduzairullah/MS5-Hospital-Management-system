@@ -1,19 +1,23 @@
-# Careflow — Hospital Management System
+# MS5 - Hospital Management system
 
 A MERN portfolio application for appointments, prescriptions, and patient records. React powers the interface, Express runs on Node.js, and Mongoose persists records in a real MongoDB database.
 
 ## Start on Windows
 
-Node.js is already installed on this laptop.
+Double-click **Start-Careflow.cmd**. On a fresh 64-bit Windows 10/11 laptop, the launcher:
 
-```powershell
-npm.cmd install
-npm.cmd run dev
-```
+1. Uses Node.js 24 if installed with npm, otherwise downloads the official Windows runtime into `.local/runtime`. No system-wide installation or administrator rights are needed.
+2. Verifies the downloaded ZIP against Node.js's official SHA-256 checksum.
+3. Installs the locked project dependencies on first setup, after dependencies change, or when the installed packages are incompatible with the destination computer.
+4. Starts the React frontend and Express backend. MongoDB downloads automatically when its local binary is missing.
 
-Open http://127.0.0.1:5173. On the first server start, the application downloads MongoDB automatically into `.local/mongodb`. Its WiredTiger database persists in `.local/data` across restarts. The `mongodb-memory-server` package manages the real MongoDB process; the application does not use a mock or an in-memory JavaScript database. Keep `.local` to retain your records. Do not run multiple server instances against the same data directory.
+First-time setup needs internet access and enough disk space for Node.js, project packages and MongoDB. Later launches normally use the installed files. Open http://127.0.0.1:5173 when the servers are ready, and keep the launcher window open. If setup fails, it displays an error; fix the connection or reported issue and run it again. Managed school/work laptops may block downloads or scripts and require their administrator's help.
 
-For a shortcut, double-click `Start-Careflow.cmd` in this folder. Keep its window open while using the app. If the app is already running, use its existing browser tab instead of starting a second instance.
+### Copy to another laptop
+
+Close Careflow cleanly before copying the `hospital` folder. Include the hidden `.local` folder: `.local/data` contains your records and accounts, and `.local/mongodb` contains MongoDB. Do not copy the database while the app is running. You may omit `node_modules` and `dist`; setup rebuilds dependencies as needed. Then double-click `Start-Careflow.cmd` on the destination laptop. Existing account passwords remain unchanged. This launcher targets Windows; macOS and Linux need different setup.
+
+The application uses a real persistent MongoDB database, managed by `mongodb-memory-server`, not an in-memory JavaScript mock. Never run two copies against the same database folder. Express and React are installed as project packages; MongoDB Compass and VS Code are not required to use the app.
 
 Demo login: **admin@careflow.demo** / **Careflow@2026**
 
@@ -85,5 +89,15 @@ Appointment transitions: Scheduled → Checked in → Completed; Scheduled or Ch
 
 ## Scope
 
-This is a local college/portfolio demo, not a clinical deployment. Use fictional information only. Before real hospital use, it needs audit logs, account recovery/password management, clinical review, backup/restore procedures, deployment security, and privacy/compliance assessment. Local development binds to localhost. Production uses the hosted origin allowlist, HTTPS cookies and Atlas. See DEPLOYMENT.md for Render setup and data migration.
+This is a local college/portfolio demo, not a clinical deployment. Use fictional information only. Before real hospital use, it needs audit logs, account recovery/password management, clinical review, backup/restore procedures, deployment security, and privacy/compliance assessment. The app runs locally on your laptop. Double-click Start-Careflow.cmd and open http://127.0.0.1:5173. Your MongoDB records are stored in .local/data; keep this folder to preserve your accounts and records.
+
+
+
+## Permanently remove Careflow
+
+`Delete-Careflow.cmd` requests Windows administrator permission and then requires typing `DELETE CAREFLOW AND DATA`. It permanently deletes this entire project folder, including records, accounts, photos, backups and downloaded packages/runtimes. Copy any backup you want to keep OUTSIDE the project first, and stop Careflow with Ctrl+C before running it.
+
+It also uninstalls detected system-wide MSI installations of Node.js/npm and MongoDB Server. These may be shared with other projects. Unsupported installers require manual removal in Windows Installed apps; the script stops before deleting the project in that case. External MongoDB data folders, global npm packages outside this project, MongoDB Compass, Git, VS Code, cloud accounts and GitHub repositories are not erased.
+
+For a read-only preview: `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/delete-careflow.ps1 -Preview`.
 

@@ -1,17 +1,13 @@
 @echo off
+setlocal
 cd /d "%~dp0"
 echo.
 echo  Careflow - Hospital Management System
-echo  Open http://127.0.0.1:5173 after the server starts.
-echo  Keep this window open while using the app.
+echo  Checking this laptop and preparing the app...
 echo.
-if not exist node_modules (
-  echo Installing dependencies...
-  call npm.cmd install
-  if errorlevel 1 (
-    pause
-    exit /b 1
-  )
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\start-careflow.ps1"
+if errorlevel 1 (
+  echo.
+  echo  Careflow could not start. Read the message above, then try again.
 )
-call npm.cmd run dev
 pause

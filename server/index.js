@@ -1,5 +1,5 @@
-import "dotenv/config";
-import { checkProductionAccounts } from "./production.js";
+import dotenv from "dotenv";
+import { fileURLToPath } from "node:url";
 import { registerPasswordRoute } from "./password.js";
 import { management, publicUser } from "./management.js";
 import express from "express";
@@ -19,17 +19,9 @@ import {
   prescriptionInput,
 } from "./validation.js";
 
-const production = process.env.NODE_ENV === "production";
-if (
-  production &&
-  (!process.env.MONGODB_URI ||
-    !process.env.JWT_SECRET ||
-    process.env.JWT_SECRET.length < 32)
-)
-  throw new Error(
-    "Production requires MONGODB_URI and JWT_SECRET (at least 32 characters).",
-  );
-if (!production) mkdirSync(".local/data", { recursive: true });
+process.chdir(fileURLToPath(new URL("../", import.meta.url)));
+dotenv.config({ path: path.resolve(".env"), quiet: true });
+mkdirSync(".local/data", { recursive: true });
 const secretPath = ".local/session-secret";
 if (!process.env.JWT_SECRET && !existsSync(secretPath))
   writeFileSync(secretPath, randomBytes(48).toString("hex"));
@@ -121,7 +113,7 @@ const Prescription = mongoose.model(
   }),
 );
 await Appointment.init();
-if (!production && !(await User.exists({}))) {
+if (!(await User.exists({}))) {
   await User.create({
     name: "Alex Morgan",
     email: "admin@careflow.demo",
@@ -129,7 +121,7 @@ if (!production && !(await User.exists({}))) {
     role: "Administrator",
   });
 }
-if (!production && !(await Doctor.exists({})))
+if (!(await Doctor.exists({})))
   await Doctor.insertMany([
     {
       name: "Dr. Sarah Mitchell",
@@ -140,7 +132,7 @@ if (!production && !(await Doctor.exists({})))
     { name: "Dr. Emily Chen", specialty: "Dermatology", color: "orange" },
     { name: "Dr. Daniel Brooks", specialty: "Orthopedics", color: "blue" },
   ]);
-if (!production && !(await Patient.exists({}))) {
+if (!(await Patient.exists({}))) {
   const patients = await Patient.insertMany(
     [
       "Olivia Bennett",
@@ -180,21 +172,13 @@ if (!production && !(await Patient.exists({}))) {
     })),
   );
 }
-if (production) await checkProductionAccounts(User);
 const app = express();
-if (process.env.RENDER) app.set("trust proxy", 1);
-const allowedOrigins = production
-  ? [process.env.APP_ORIGIN, process.env.RENDER_EXTERNAL_URL]
-      .filter(Boolean)
-      .map((value) => new URL(value).origin)
-  : [
-      "http://localhost:5173",
-      "http://127.0.0.1:5173",
-      "http://localhost:4000",
-      "http://127.0.0.1:4000",
-    ];
-if (production && !allowedOrigins.length)
-  throw new Error("Production requires APP_ORIGIN or RENDER_EXTERNAL_URL.");
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:4000",
+  "http://127.0.0.1:4000",
+];
 app.use(
   helmet({ contentSecurityPolicy: false }),
   express.json({ limit: "600kb" }),
@@ -244,7 +228,7 @@ app.post(
       {
         httpOnly: true,
         sameSite: "strict",
-        secure: process.env.NODE_ENV === "production",
+        secure: false,
         maxAge: 28800000,
       },
     );
@@ -283,7 +267,7 @@ registerPasswordRoute(app, {
       {
         httpOnly: true,
         sameSite: "strict",
-        secure: process.env.NODE_ENV === "production",
+        secure: false,
         maxAge: 28800000,
       },
     ),
@@ -452,17 +436,9 @@ app.use((err, _req, res, _next) => {
       : "Something went wrong. Please try again.",
   });
 });
-if (!production) {
-  writeFileSync(".local/server.pid", String(process.pid));
-  writeFileSync(
-    ".local/database-uri",
-    process.env.MONGODB_URI || mongo.getUri("careflow"),
-  );
-}
-const server = app.listen(
-  process.env.PORT || 4000,
-  production ? "0.0.0.0" : "127.0.0.1",
-  () => console.log(`Careflow API ready on port ${process.env.PORT || 4000}`),
+writeFileSync(".local/server.pid", String(process.pid));
+const server = app.listen(process.env.PORT || 4000, "127.0.0.1", () =>
+  console.log(`Careflow API ready on port ${process.env.PORT || 4000}`),
 );
 for (const signal of ["SIGINT", "SIGTERM"])
   process.on(signal, async () => {

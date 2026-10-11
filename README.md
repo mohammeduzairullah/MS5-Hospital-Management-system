@@ -1,5 +1,7 @@
 # MS5 - Hospital Management system
 
+For the live version with a separate fresh fictional database, see [DEPLOYMENT.md](DEPLOYMENT.md). Local startup remains available and uses its existing local data.
+
 A MERN portfolio application for appointments, prescriptions, and patient records. React powers the interface, Express runs on Node.js, and Mongoose persists records in a real MongoDB database.
 
 ## Start on Windows

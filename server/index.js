@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import { hostingConfig } from "./hosting.js";
 import { fileURLToPath } from "node:url";
 import { registerPasswordRoute } from "./password.js";
 import { management, publicUser } from "./management.js";
@@ -21,7 +22,8 @@ import {
 
 process.chdir(fileURLToPath(new URL("../", import.meta.url)));
 dotenv.config({ path: path.resolve(".env"), quiet: true });
-mkdirSync(".local/data", { recursive: true });
+const hosting = hostingConfig();
+if (!hosting.production) mkdirSync(".local/data", { recursive: true });
 const secretPath = ".local/session-secret";
 if (!process.env.JWT_SECRET && !existsSync(secretPath))
   writeFileSync(secretPath, randomBytes(48).toString("hex"));
@@ -39,7 +41,32 @@ if (!process.env.MONGODB_URI) {
     binary: { downloadDir: path.resolve(".local/mongodb") },
   });
 }
-await mongoose.connect(process.env.MONGODB_URI || mongo.getUri("careflow"));
+await mongoose.connect(
+  process.env.MONGODB_URI || mongo.getUri("careflow"),
+  hosting.production ? { dbName: hosting.dbName } : {},
+);
+let seedDemo = !hosting.production;
+if (hosting.production) {
+  const db = mongoose.connection.db;
+  const initialized = await db
+    .collection("demo_setup")
+    .findOne({ _id: "fresh-demo-v1" });
+  if (!initialized) {
+    for (const name of [
+      "users",
+      "doctors",
+      "patients",
+      "appointments",
+      "prescriptions",
+    ]) {
+      if (await db.collection(name).countDocuments())
+        throw new Error(
+          "Live demo database is not empty and has no setup marker. Refusing to change existing data.",
+        );
+    }
+    seedDemo = true;
+  }
+}
 const schema = (fields) =>
   new mongoose.Schema(
     { archived: { type: Boolean, default: false }, ...fields },
@@ -113,15 +140,18 @@ const Prescription = mongoose.model(
   }),
 );
 await Appointment.init();
-if (!(await User.exists({}))) {
+if (seedDemo && !(await User.exists({}))) {
   await User.create({
     name: "Alex Morgan",
     email: "admin@careflow.demo",
-    password: await bcrypt.hash("Careflow@2026", 12),
+    password: await bcrypt.hash(
+      hosting.production ? process.env.DEMO_ADMIN_PASSWORD : "Careflow@2026",
+      12,
+    ),
     role: "Administrator",
   });
 }
-if (!(await Doctor.exists({})))
+if (seedDemo && !(await Doctor.exists({})))
   await Doctor.insertMany([
     {
       name: "Dr. Sarah Mitchell",
@@ -132,7 +162,7 @@ if (!(await Doctor.exists({})))
     { name: "Dr. Emily Chen", specialty: "Dermatology", color: "orange" },
     { name: "Dr. Daniel Brooks", specialty: "Orthopedics", color: "blue" },
   ]);
-if (!(await Patient.exists({}))) {
+if (seedDemo && !(await Patient.exists({}))) {
   const patients = await Patient.insertMany(
     [
       "Olivia Bennett",
@@ -172,13 +202,30 @@ if (!(await Patient.exists({}))) {
     })),
   );
 }
+if (hosting.production && seedDemo) {
+  const patient = await Patient.findOne();
+  const doctor = await Doctor.findOne();
+  await Prescription.create({
+    patient: patient._id,
+    doctor: doctor._id,
+    diagnosis: "Fictional demonstration consultation",
+    medications: [
+      {
+        name: "Demo medication (not for use)",
+        dosage: "Example only",
+        frequency: "Example only",
+        duration: "Example only",
+      },
+    ],
+    notes: "Portfolio sample only. Not medical advice or a valid prescription.",
+  });
+  await mongoose.connection.db
+    .collection("demo_setup")
+    .insertOne({ _id: "fresh-demo-v1", createdAt: new Date() });
+}
 const app = express();
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "http://localhost:4000",
-  "http://127.0.0.1:4000",
-];
+if (process.env.RENDER) app.set("trust proxy", 1);
+const allowedOrigins = hosting.origins;
 app.use(
   helmet({ contentSecurityPolicy: false }),
   express.json({ limit: "600kb" }),
@@ -228,7 +275,7 @@ app.post(
       {
         httpOnly: true,
         sameSite: "strict",
-        secure: false,
+        secure: hosting.production,
         maxAge: 28800000,
       },
     );
@@ -267,7 +314,7 @@ registerPasswordRoute(app, {
       {
         httpOnly: true,
         sameSite: "strict",
-        secure: false,
+        secure: hosting.production,
         maxAge: 28800000,
       },
     ),
@@ -436,9 +483,12 @@ app.use((err, _req, res, _next) => {
       : "Something went wrong. Please try again.",
   });
 });
-writeFileSync(".local/server.pid", String(process.pid));
-const server = app.listen(process.env.PORT || 4000, "127.0.0.1", () =>
-  console.log(`Careflow API ready on port ${process.env.PORT || 4000}`),
+if (!hosting.production)
+  writeFileSync(".local/server.pid", String(process.pid));
+const server = app.listen(
+  process.env.PORT || 4000,
+  hosting.production ? "0.0.0.0" : "127.0.0.1",
+  () => console.log(`Careflow API ready on port ${process.env.PORT || 4000}`),
 );
 for (const signal of ["SIGINT", "SIGTERM"])
   process.on(signal, async () => {

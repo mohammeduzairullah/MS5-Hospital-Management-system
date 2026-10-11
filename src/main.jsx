@@ -140,6 +140,7 @@ function App() {
     };
   }, [modal, busy]);
   const open = (type, record) => {
+    if (type === "appointment" && user?.role !== "Administrator") return;
     setError("");
     if (
       user?.role === "Doctor" &&
@@ -365,7 +366,9 @@ function App() {
               {page !== "Statistics" &&
                 !(
                   user.role === "Doctor" &&
-                  ["Doctors", "Patients"].includes(page)
+                  ["Doctors", "Patients", "Overview", "Appointments"].includes(
+                    page,
+                  )
                 ) && (
                   <button
                     className="primary"
@@ -629,7 +632,11 @@ function App() {
                     status={status}
                     busy={busy}
                     onPatient={(p) => open("profile", p)}
-                    onBook={(record) => open("appointment", record)}
+                    onBook={
+                      user.role === "Administrator"
+                        ? (record) => open("appointment", record)
+                        : undefined
+                    }
                     Table={(props) => (
                       <AppointmentTable
                         {...props}
@@ -739,12 +746,16 @@ function App() {
                             }
                           </b>
                         </div>
-                        <button
-                          className="secondary"
-                          onClick={() => open("appointment", { doctor: d._id })}
-                        >
-                          <CalendarDays size={16} /> Book appointment
-                        </button>
+                        {user.role === "Administrator" && (
+                          <button
+                            className="secondary"
+                            onClick={() =>
+                              open("appointment", { doctor: d._id })
+                            }
+                          >
+                            <CalendarDays size={16} /> Book appointment
+                          </button>
+                        )}
                       </section>
                     ))}
                   </div>
@@ -1069,14 +1080,16 @@ function App() {
                   (p) => p.patient._id === modal.record._id,
                 ) && <p className="muted">No prescriptions recorded.</p>}
                 <div className="form-actions">
-                  <button
-                    className="primary"
-                    onClick={() =>
-                      open("appointment", { patient: modal.record._id })
-                    }
-                  >
-                    Book appointment
-                  </button>
+                  {user.role === "Administrator" && (
+                    <button
+                      className="primary"
+                      onClick={() =>
+                        open("appointment", { patient: modal.record._id })
+                      }
+                    >
+                      Book appointment
+                    </button>
+                  )}
                   <button
                     className="secondary"
                     onClick={() =>

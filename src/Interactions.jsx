@@ -439,7 +439,7 @@ export function AppointmentWorkspace({
                           <small>{a.status}</small>
                         </button>
                       ))}
-                      {free.length > 0 ? (
+                      {free.length > 0 && onBook ? (
                         <button
                           className="calendar-book"
                           aria-label={`Book ${day} at ${time}${doctor ? " with " + free[0].name : ""}`}
@@ -456,7 +456,9 @@ export function AppointmentWorkspace({
                         </button>
                       ) : (
                         !visits.length && (
-                          <span className="unavailable-cell">—</span>
+                          <span className="unavailable-cell">
+                            {free.length > 0 ? "Available" : "—"}
+                          </span>
                         )
                       )}
                     </div>

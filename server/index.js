@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import { requireAppointmentCreator } from "./appointment-access.js";
 import { hostingConfig } from "./hosting.js";
 import { fileURLToPath } from "node:url";
 import { registerPasswordRoute } from "./password.js";
@@ -302,6 +303,7 @@ app.use("/api", async (req, res, next) => {
   }
 });
 app.get("/api/me", (req, res) => res.json(publicUser(req.user)));
+app.post("/api/appointments", requireAppointmentCreator);
 management(app, { User, Doctor, Patient, Appointment, Prescription });
 registerPasswordRoute(app, {
   User,

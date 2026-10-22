@@ -261,6 +261,8 @@ export function AppointmentFields({ data, record, date, busy }) {
           maxLength={300}
           name="reason"
           placeholder="What brings the patient in?"
+          defaultValue={record?.reason || ""}
+          readOnly={!!record?.requestBooking}
         />
       </label>
       <button

@@ -1,0 +1,267 @@
+.patient-portal {
+  min-height: 100vh;
+  background: #f4f8f6;
+  color: #23433b;
+}
+.portal-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 22px max(24px, calc((100vw - 1200px) / 2));
+  background: white;
+  border-bottom: 1px solid #dce8e2;
+}
+.portal-header .secondary {
+  margin-left: auto;
+}
+.portal-label {
+  font-size: 13px;
+  color: #637d73;
+}
+.portal-content {
+  max-width: 1200px;
+  margin: auto;
+  padding: 38px 24px;
+}
+.portal-welcome {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 26px;
+}
+.portal-welcome h1 {
+  font-size: clamp(26px, 4vw, 38px);
+  margin: 12px 0;
+}
+.portal-welcome p,
+.portal-card > p {
+  color: #687e75;
+  line-height: 1.65;
+}
+.portal-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 26px;
+}
+.portal-metrics > div {
+  background: white;
+  border: 1px solid #dde9e3;
+  border-radius: 14px;
+  padding: 22px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.portal-metrics svg {
+  color: #168777;
+}
+.portal-metrics strong {
+  font-size: 28px;
+}
+.portal-metrics span {
+  font-size: 13px;
+  color: #687e75;
+}
+.portal-columns {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 24px;
+  align-items: start;
+}
+.portal-card {
+  background: white;
+  padding: 28px;
+  border: 1px solid #dde9e3;
+  border-radius: 16px;
+  min-width: 0;
+  animation: portal-enter 0.3s ease both;
+}
+.portal-card h2 {
+  font-size: 23px;
+  margin: 16px 0;
+}
+.portal-card h3 {
+  font-size: 16px;
+  margin: 0;
+}
+.portal-card form {
+  display: grid;
+  gap: 18px;
+  margin-top: 24px;
+}
+.portal-card form label {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.portal-card textarea {
+  resize: vertical;
+}
+.portal-card .primary {
+  margin-top: 16px;
+}
+.portal-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e4ece7;
+  margin-bottom: 20px;
+}
+.portal-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 15px;
+  border: 0;
+  border-radius: 8px;
+  color: #61796e;
+  background: #f4f7f5;
+  cursor: pointer;
+}
+.portal-tabs button[aria-selected="true"],
+.portal-tabs button[aria-pressed="true"] {
+  background: #157c6e;
+  color: white;
+}
+.request-card {
+  border-bottom: 1px solid #e3ebe6;
+  padding: 22px 0;
+  overflow-wrap: anywhere;
+}
+.request-card:last-child {
+  border: 0;
+}
+.request-card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.request-status {
+  font-size: 11px;
+  border-radius: 30px;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+.request-status.pending {
+  color: #895b11;
+  background: #fff4dc;
+}
+.request-status.booked {
+  color: #146c5d;
+  background: #e3f4ed;
+}
+.visit-confirmation {
+  margin-top: 16px;
+  padding: 14px;
+  background: #edf7f2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.visit-confirmation small {
+  display: block;
+}
+.portal-empty {
+  text-align: center;
+  padding: 36px 15px;
+  color: #789084;
+  line-height: 1.7;
+}
+.portal-success {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: #deefe7;
+  color: #185d4e;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.unread-update {
+  border-left: 3px solid #168777;
+  padding-left: 15px;
+}
+.request-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(285px, 1fr));
+  gap: 18px;
+}
+.request-grid .portal-card {
+  overflow-wrap: anywhere;
+}
+.request-grid .primary {
+  display: flex;
+}
+.request-booking {
+  max-width: 760px;
+}
+.patient-registration {
+  min-height: 100vh;
+  background: #edf5ef;
+  padding: 38px 18px;
+}
+.patient-registration > .portal-card {
+  max-width: 640px;
+  margin: auto;
+}
+.portal-card button:focus-visible,
+.portal-tabs button:focus-visible {
+  outline: 3px solid #e0ac50;
+  outline-offset: 3px;
+}
+@keyframes portal-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 760px) {
+  .portal-columns {
+    grid-template-columns: 1fr;
+  }
+  .portal-metrics {
+    gap: 8px;
+  }
+  .portal-metrics > div {
+    padding: 12px;
+  }
+  .portal-metrics span {
+    width: 100%;
+  }
+  .portal-header {
+    padding: 18px;
+    gap: 12px;
+  }
+  .portal-label {
+    display: none;
+  }
+  .portal-card {
+    padding: 20px;
+  }
+  .portal-content {
+    padding: 24px 16px;
+  }
+  .portal-header .brand {
+    font-size: 25px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .portal-card {
+    animation: none;
+  }
+}

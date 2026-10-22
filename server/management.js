@@ -224,6 +224,13 @@ export function management(
       archived: { $ne: true },
     });
     if (!a) return res.status(404).json({ message: "Appointment not found." });
+    if (a.request && String(a.patient) !== data.patient)
+      return res
+        .status(400)
+        .json({
+          message:
+            "A patient-requested visit cannot be reassigned to another patient.",
+        });
     if (a.status !== "Scheduled")
       return res
         .status(400)

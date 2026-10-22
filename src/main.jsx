@@ -1,4 +1,9 @@
 import React, { useEffect, useState } from "react";
+import {
+  PatientPortal,
+  PatientRegistration,
+  RequestInbox,
+} from "./PatientPortal";
 import { createRoot } from "react-dom/client";
 import {
   Activity,
@@ -93,7 +98,7 @@ function App() {
     api("/me")
       .then(async (u) => {
         setUser(u);
-        await refresh();
+        if (u.role !== "Patient") await refresh();
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -208,7 +213,19 @@ function App() {
       <Login
         onLogin={async (u) => {
           setUser(u);
-          await refresh();
+          if (u.role !== "Patient") await refresh();
+        }}
+      />
+    );
+  if (user.role === "Patient")
+    return (
+      <PatientPortal
+        api={api}
+        user={user}
+        onLogout={async () => {
+          await api("/logout", {});
+          setUser(null);
+          setPage("Overview");
         }}
       />
     );
@@ -244,6 +261,9 @@ function App() {
           {[
             [LayoutDashboard, "Overview"],
             [CalendarDays, "Appointments"],
+            ...(user.role === "Administrator"
+              ? [[CalendarDays, "Patient requests"]]
+              : []),
             [Users, "Patients"],
             [FileText, "Prescriptions"],
             [Stethoscope, "Doctors"],
@@ -352,6 +372,8 @@ function App() {
                         "Here’s what’s happening across your hospital today.",
                       Appointments:
                         "Keep every visit organized, from booking to follow-up.",
+                      "Patient requests":
+                        "Review patient concerns, assign a doctor, and confirm their visit.",
                       Patients:
                         "A complete picture of every patient, in one place.",
                       Prescriptions:
@@ -363,7 +385,7 @@ function App() {
                   }
                 </p>
               </div>
-              {page !== "Statistics" &&
+              {!["Statistics", "Patient requests"].includes(page) &&
                 !(
                   user.role === "Doctor" &&
                   ["Doctors", "Patients", "Overview", "Appointments"].includes(
@@ -395,6 +417,9 @@ function App() {
                   </button>
                 )}
             </div>
+            {page === "Patient requests" && user.role === "Administrator" && (
+              <RequestInbox api={api} data={data} onBooked={refresh} />
+            )}
             {page === "Overview" && (
               <>
                 <div className="stats">
@@ -594,7 +619,7 @@ function App() {
                 </section>
               </>
             )}
-            {page !== "Overview" && (
+            {!["Overview", "Patient requests"].includes(page) && (
               <>
                 {page === "Statistics" && <DoctorStats data={data} />}
                 {page !== "Statistics" && (
@@ -1393,7 +1418,12 @@ function Prescription({ record: p }) {
 }
 function Login({ onLogin }) {
   const [error, setError] = useState(""),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [registering, setRegistering] = useState(false);
+  if (registering)
+    return (
+      <PatientRegistration api={api} onBack={() => setRegistering(false)} />
+    );
   return (
     <div className="login">
       <div className="login-story">
@@ -1459,7 +1489,7 @@ function Login({ onLogin }) {
                 type="email"
                 autoComplete="username"
                 required
-                defaultValue="admin@careflow.demo"
+                defaultValue={import.meta.env.DEV ? "admin@careflow.demo" : ""}
               />
             </label>
             <label>
@@ -1477,6 +1507,13 @@ function Login({ onLogin }) {
               <ArrowRight size={18} />
             </button>
           </form>
+          <button
+            type="button"
+            className="text-button"
+            onClick={() => setRegistering(true)}
+          >
+            New patient? Create an account
+          </button>
           <div className="login-demo">
             <b>Take a look around</b>
             <p>

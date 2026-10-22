@@ -1,4 +1,9 @@
 import dotenv from "dotenv";
+import {
+  registerPatientSignup,
+  patientPortal,
+  staffOnly,
+} from "./patient-portal.js";
 import { requireAppointmentCreator } from "./appointment-access.js";
 import { hostingConfig } from "./hosting.js";
 import { fileURLToPath } from "node:url";
@@ -82,6 +87,8 @@ const User = mongoose.model(
     role: String,
     sessionVersion: { type: Number, default: 0 },
     doctor: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor" },
+    patient: { type: mongoose.Schema.Types.ObjectId, ref: "Patient" },
+    notificationsReadAt: Date,
     photo: String,
     phone: String,
     disabled: Boolean,
@@ -113,6 +120,7 @@ const Doctor = mongoose.model(
   }),
 );
 const appointmentSchema = schema({
+  request: { type: mongoose.Schema.Types.ObjectId, ref: "AppointmentRequest" },
   patient: { type: mongoose.Schema.Types.ObjectId, ref: "Patient" },
   doctor: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor" },
   date: String,
@@ -127,7 +135,24 @@ appointmentSchema.index(
     partialFilterExpression: { status: { $in: ["Scheduled", "Checked in"] } },
   },
 );
+appointmentSchema.index(
+  { request: 1 },
+  { unique: true, partialFilterExpression: { request: { $exists: true } } },
+);
 const Appointment = mongoose.model("Appointment", appointmentSchema);
+const AppointmentRequest = mongoose.model(
+  "AppointmentRequest",
+  schema({
+    patient: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Patient",
+      required: true,
+      index: true,
+    },
+    department: String,
+    issue: String,
+  }),
+);
 const Prescription = mongoose.model(
   "Prescription",
   schema({
@@ -233,6 +258,7 @@ app.use(
   cookieParser(),
 );
 app.use("/api", (req, res, next) => {
+  res.set("Cache-Control", "no-store");
   if (
     !["GET", "HEAD", "OPTIONS"].includes(req.method) &&
     req.get("origin") &&
@@ -256,7 +282,7 @@ app.post(
     const user =
       typeof email === "string"
         ? await User.findOne({
-            email: email.toLowerCase(),
+            email: email.trim().toLowerCase(),
             disabled: { $ne: true },
           })
         : null;
@@ -286,6 +312,7 @@ app.post(
 app.post("/api/logout", (_req, res) =>
   res.clearCookie("session").json({ ok: true }),
 );
+registerPatientSignup(app, { User, Patient });
 app.use("/api", async (req, res, next) => {
   try {
     const token = jwt.verify(req.cookies.session, secret);
@@ -303,6 +330,8 @@ app.use("/api", async (req, res, next) => {
   }
 });
 app.get("/api/me", (req, res) => res.json(publicUser(req.user)));
+patientPortal(app, { User, Patient, Doctor, Appointment, AppointmentRequest });
+app.use("/api", staffOnly);
 app.post("/api/appointments", requireAppointmentCreator);
 management(app, { User, Doctor, Patient, Appointment, Prescription });
 registerPasswordRoute(app, {

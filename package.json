@@ -12,6 +12,7 @@
     "test": "node --test server/*.test.js",
     "test:smoke": "node scripts/smoke.js",
     "test:management": "node scripts/management-smoke.js",
+    "test:patient-portal": "node scripts/patient-portal-smoke.js",
     "format": "prettier --write src server scripts package.json vite.config.js index.html"
   },
   "dependencies": {

@@ -191,6 +191,68 @@ try {
     { ...booking, time: "09:30" },
     409,
   );
+  const prescription = (
+    await call(
+      "/prescriptions",
+      admin,
+      "POST",
+      {
+        patient: request.patient,
+        doctor: doctor._id,
+        diagnosis: "Fictional download test",
+        medications: [
+          {
+            name: "Demo medication",
+            dosage: "Example only",
+            frequency: "Example only",
+            duration: "Example only",
+          },
+        ],
+        notes: "Fictional test prescription.",
+      },
+      201,
+    )
+  ).data;
+  const pdfPath = `/portal/prescriptions/${prescription._id}/pdf`;
+  const ownPrescriptions = (await call("/portal", alice)).data.prescriptions;
+  assert.deepEqual(
+    ownPrescriptions.map((p) => p._id),
+    [prescription._id],
+  );
+  assert.equal(ownPrescriptions[0].doctor.name, doctor.name);
+  assert.equal((await call("/portal", bob)).data.prescriptions.length, 0);
+  await call(pdfPath, "", "GET", undefined, 401);
+  await call(pdfPath, bob, "GET", undefined, 404);
+  await call(pdfPath, admin, "GET", undefined, 403);
+  await call(
+    "/portal/prescriptions/000000000000000000000000/pdf",
+    alice,
+    "GET",
+    undefined,
+    404,
+  );
+  await call("/portal/prescriptions/invalid/pdf", alice, "GET", undefined, 400);
+  for (const url of [pdfPath, `/prescriptions/${prescription._id}/pdf`]) {
+    const pdf = await fetch(base + url, {
+      headers: { cookie: url === pdfPath ? alice : admin },
+    });
+    assert.equal(pdf.status, 200);
+    assert.equal(pdf.headers.get("content-type"), "application/pdf");
+    assert.match(
+      pdf.headers.get("content-disposition"),
+      /attachment; filename="careflow-prescription-.*\.pdf"/,
+    );
+    assert.equal(pdf.headers.get("cache-control"), "no-store");
+    assert.equal(
+      Buffer.from(await pdf.arrayBuffer())
+        .subarray(0, 5)
+        .toString(),
+      "%PDF-",
+    );
+  }
+  await call(`/prescriptions/${prescription._id}`, admin, "DELETE");
+  assert.equal((await call("/portal", alice)).data.prescriptions.length, 0);
+  await call(pdfPath, alice, "GET", undefined, 404);
   const r2 = (
     await call(
       "/portal/requests",
@@ -262,8 +324,9 @@ try {
   assert.deepEqual(race.map((r) => r.status).sort(), [201, 409]);
   await call(`/patients/${request.patient}`, admin, "DELETE");
   await call("/portal", alice, "GET", undefined, 403);
+  await call(pdfPath, alice, "GET", undefined, 403);
   console.log(
-    "PASS: patient registration, role boundaries, ownership, validation, admin booking, conflict/race protection, notification persistence, rescheduling, cancellations and inactive accounts.",
+    "PASS: patient registration, role boundaries, ownership, validation, admin booking, conflict/race protection, notification persistence, prescription PDF downloads and access restrictions, rescheduling, cancellations and inactive accounts.",
   );
   if (process.argv.includes("--preview")) {
     await signup("Preview Patient", "preview@example.com");

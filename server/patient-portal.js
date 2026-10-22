@@ -2,6 +2,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
 import { patientInput, appointmentInput } from "./validation.js";
+import { prescriptionPDF } from "./prescription-pdf.js";
 
 export const registrationInput = patientInput
   .pick({ name: true, email: true, phone: true, dob: true, gender: true })
@@ -78,7 +79,7 @@ export function registerPatientSignup(app, { User, Patient }) {
 
 export function patientPortal(
   app,
-  { User, Patient, Doctor, Appointment, AppointmentRequest },
+  { User, Patient, Doctor, Appointment, AppointmentRequest, Prescription },
 ) {
   const patientOnly = role("Patient"),
     adminOnly = role("Administrator");
@@ -99,23 +100,50 @@ export function patientPortal(
     next();
   });
   app.get("/api/portal", async (req, res) => {
-    const [requests, appointments, departments] = await Promise.all([
-      AppointmentRequest.find({ patient: req.user.patient })
-        .sort({ createdAt: -1 })
-        .lean(),
-      Appointment.find({ patient: req.user.patient })
-        .populate("doctor", "name specialty")
-        .sort({ date: -1, time: -1 })
-        .lean(),
-      Doctor.distinct("specialty", { archived: { $ne: true } }),
-    ]);
+    const [requests, appointments, departments, prescriptions] =
+      await Promise.all([
+        AppointmentRequest.find({ patient: req.user.patient })
+          .sort({ createdAt: -1 })
+          .lean(),
+        Appointment.find({ patient: req.user.patient })
+          .populate("doctor", "name specialty")
+          .sort({ date: -1, time: -1 })
+          .lean(),
+        Doctor.distinct("specialty", { archived: { $ne: true } }),
+        Prescription.find({
+          patient: req.user.patient,
+          archived: { $ne: true },
+        })
+          .select("diagnosis doctor createdAt")
+          .populate("doctor", "name specialty")
+          .sort({ createdAt: -1 })
+          .lean(),
+      ]);
     // Appointment updates are the durable notifications, including cancellations.
     res.json({
       requests,
       appointments,
       departments: departments.sort(),
+      prescriptions,
       notificationsReadAt: req.user.notificationsReadAt || null,
     });
+  });
+  app.get("/api/portal/prescriptions/:id/pdf", async (req, res) => {
+    const record = await Prescription.findOne({
+      _id: req.params.id,
+      patient: req.user.patient,
+      archived: { $ne: true },
+    }).populate("patient doctor");
+    if (!record || !record.patient || !record.doctor)
+      return res.status(404).json({ message: "Prescription not found." });
+    const pdf = await prescriptionPDF(record);
+    res
+      .set({
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="careflow-prescription-${record.id}.pdf"`,
+        "Cache-Control": "no-store",
+      })
+      .send(pdf);
   });
   app.post(
     "/api/portal/requests",

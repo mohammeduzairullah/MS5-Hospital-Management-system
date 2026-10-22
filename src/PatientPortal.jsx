@@ -5,6 +5,8 @@ import {
   CalendarDays,
   Check,
   Clock,
+  Download,
+  FileText,
   LogOut,
   RefreshCw,
   Send,
@@ -385,6 +387,13 @@ export function PatientPortal({ api, user, onLogout }) {
                       <span className="nav-count">{unread.length}</span>
                     )}
                   </button>
+                  <button
+                    role="tab"
+                    aria-selected={tab === "Prescriptions"}
+                    onClick={() => setTab("Prescriptions")}
+                  >
+                    Prescriptions
+                  </button>
                 </div>
                 {tab === "Requests" ? (
                   <>
@@ -436,6 +445,10 @@ export function PatientPortal({ api, user, onLogout }) {
                       );
                     })}
                   </>
+                ) : tab === "Prescriptions" ? (
+                  <PatientPrescriptions
+                    prescriptions={data.prescriptions || []}
+                  />
                 ) : (
                   <>
                     <div className="request-card-title">
@@ -508,6 +521,74 @@ export function PatientPortal({ api, user, onLogout }) {
         )}
       </main>
     </div>
+  );
+}
+
+function PatientPrescriptions({ prescriptions }) {
+  const [downloading, setDownloading] = useState(null);
+  const [error, setError] = useState("");
+  async function download(prescription) {
+    setDownloading(prescription._id);
+    setError("");
+    try {
+      const response = await fetch(
+        `/api/portal/prescriptions/${prescription._id}/pdf`,
+      );
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}));
+        throw Error(
+          result.message ||
+            "Could not download this prescription. Please try again.",
+        );
+      }
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `careflow-prescription-${prescription._id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setDownloading(null);
+    }
+  }
+  return (
+    <>
+      <h2>My prescriptions</h2>
+      {error && (
+        <div className="error" role="alert">
+          {error}
+        </div>
+      )}
+      {!prescriptions.length && (
+        <div className="portal-empty">
+          <FileText />
+          <p>
+            No prescriptions yet. They will appear here after your doctor adds
+            them.
+          </p>
+        </div>
+      )}
+      {prescriptions.map((p) => (
+        <article className="request-card" key={p._id}>
+          <h3>{p.diagnosis}</h3>
+          <p>{p.doctor?.name || "Hospital doctor"}</p>
+          <small className="muted">Issued {stamp(p.createdAt)}</small>
+          <button
+            className="secondary"
+            disabled={!!downloading}
+            aria-label={`Download prescription for ${p.diagnosis}`}
+            onClick={() => download(p)}
+          >
+            <Download size={16} />{" "}
+            {downloading === p._id ? "Downloading…" : "Download PDF"}
+          </button>
+        </article>
+      ))}
+    </>
   );
 }
 

@@ -330,7 +330,14 @@ app.use("/api", async (req, res, next) => {
   }
 });
 app.get("/api/me", (req, res) => res.json(publicUser(req.user)));
-patientPortal(app, { User, Patient, Doctor, Appointment, AppointmentRequest });
+patientPortal(app, {
+  User,
+  Patient,
+  Doctor,
+  Appointment,
+  AppointmentRequest,
+  Prescription,
+});
 app.use("/api", staffOnly);
 app.post("/api/appointments", requireAppointmentCreator);
 management(app, { User, Doctor, Patient, Appointment, Prescription });
